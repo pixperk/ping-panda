@@ -9,6 +9,7 @@ import { format, formatDistanceToNow } from "date-fns"
 import { ArrowRight, BarChart2, Clock, Database, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { FC, useState } from "react"
+import { DashboardEmptyState } from "./dashboard-empty-state"
 
 interface DashboardPageContentProps {}
 
@@ -44,7 +45,7 @@ const DashboardPageContent: FC<DashboardPageContentProps> = ({}) => {
   }
 
   if (!categories || categories.length === 0) {
-    return <div>kui chumpa karada chumpa</div>
+    return <DashboardEmptyState/>
   }
 
   return (
