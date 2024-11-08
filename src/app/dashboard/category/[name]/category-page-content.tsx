@@ -1,37 +1,57 @@
 "use client"
 
-import Heading from "@/components/heading"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs"
-import { client } from "@/lib/client"
-import { cn } from "@/utils"
 import { Event, EventCategory } from "@prisma/client"
-import { TabsList } from "@radix-ui/react-tabs"
 import { useQuery } from "@tanstack/react-query"
-import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, Row, SortingState, useReactTable } from "@tanstack/react-table"
-import { isAfter, isToday, startOfMonth, startOfWeek } from "date-fns"
-import { ArrowUpDown, BarChart } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { FC, useEffect, useMemo, useState } from "react"
 import { EmptyCategoryState } from "./empty-category-state"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { client } from "@/lib/client"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card } from "@/components/ui/card"
+import { ArrowUpDown, BarChart } from "lucide-react"
+import { isAfter, isToday, startOfMonth, startOfWeek } from "date-fns"
+
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  Row,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/utils"
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import Heading from "@/components/heading"
 
 interface CategoryPageContentProps {
   hasEvents: boolean
   category: EventCategory
 }
 
-const CategoryPageContent: FC<CategoryPageContentProps> = ({
+export const CategoryPageContent = ({
   hasEvents: initialHasEvents,
   category,
-}) => {
+}: CategoryPageContentProps) => {
   const searchParams = useSearchParams()
 
   const [activeTab, setActiveTab] = useState<"today" | "week" | "month">(
     "today"
   )
 
+  // https://localhost:3000/dashboard/category/sale?page=5&limit=30
   const page = parseInt(searchParams.get("page") || "1", 10)
   const limit = parseInt(searchParams.get("limit") || "30", 10)
 
@@ -44,12 +64,6 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
     queryKey: ["category", category.name, "hasEvents"],
     initialData: { hasEvents: initialHasEvents },
   })
-
-  if (!pollingData.hasEvents) {
-    return <EmptyCategoryState categoryName={category.name} />
-  }
-
-  
 
   const { data, isFetching } = useQuery({
     queryKey: [
@@ -153,6 +167,10 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
     },
   })
 
+  /**
+   * I FORGOT THIS IN THE VIDEO
+   * Update URL when pagination changes
+   */
   const router = useRouter()
 
   useEffect(() => {
@@ -161,6 +179,10 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
     searchParams.set("limit", pagination.pageSize.toString())
     router.push(`?${searchParams.toString()}`, { scroll: false })
   }, [pagination, router])
+  
+  /**
+   * END OF WHAT I FORGOT IN THE VIDEO
+   */
 
   const numericFieldSums = useMemo(() => {
     if (!data?.events || data.events.length === 0) return {}
@@ -185,12 +207,7 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
       Object.entries(event.fields as object).forEach(([field, value]) => {
         if (typeof value === "number") {
           if (!sums[field]) {
-            sums[field] = {
-              total: 0,
-              thisWeek: 0,
-              thisMonth: 0,
-              today: 0,
-            }
+            sums[field] = { total: 0, thisWeek: 0, thisMonth: 0, today: 0 }
           }
 
           sums[field].total += value
@@ -254,6 +271,10 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
     })
   }
 
+  if (!pollingData.hasEvents) {
+    return <EmptyCategoryState categoryName={category.name} />
+  }
+
   return (
     <div className="space-y-6">
       <Tabs
@@ -262,12 +283,12 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
           setActiveTab(value as "today" | "week" | "month")
         }}
       >
-        <TabsList></TabsList>{" "}
         <TabsList className="mb-2">
           <TabsTrigger value="today">Today</TabsTrigger>
           <TabsTrigger value="week">This Week</TabsTrigger>
           <TabsTrigger value="month">This Month</TabsTrigger>
         </TabsList>
+
         <TabsContent value={activeTab}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
             <Card className="border-2 border-brand-700">
@@ -293,7 +314,7 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
           </div>
         </TabsContent>
       </Tabs>
-        
+
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="w-full flex flex-col gap-4">
@@ -377,9 +398,6 @@ const CategoryPageContent: FC<CategoryPageContentProps> = ({
           Next
         </Button>
       </div>
-
     </div>
   )
 }
-
-export default CategoryPageContent
