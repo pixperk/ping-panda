@@ -6,6 +6,7 @@ import { z } from "zod"
 import { CATEGORY_NAME_VALIDATOR } from "@/lib/validators/category-validator"
 import { parseColor } from "@/lib/utils"
 import { HTTPException } from "hono/http-exception"
+import { FREE_QUOTA, PRO_QUOTA } from "@/config"
 
 export const categoryRouter = router({
   getEventCategories: privateProcedure.query(async ({ c, ctx }) => {
@@ -101,7 +102,29 @@ export const categoryRouter = router({
       const { user } = ctx
       const { color, name, emoji } = input
 
-      //ADD PAID PLAN LOGIC
+      const currentDate = new Date()
+      const currentMonth = currentDate.getMonth() + 1
+      const currentYear = currentDate.getFullYear()
+
+      const quota = await db.quota.findUnique({
+        where: {
+          userId: user.id,
+          month: currentMonth,
+          year: currentYear,
+        },
+      })
+
+      const quotaLimit =
+        user.plan === "FREE"
+          ? FREE_QUOTA.maxEventCategories
+          : PRO_QUOTA.maxEventCategories
+
+      if (quota && quota.count >= quotaLimit) {
+        throw new HTTPException(429, {
+          message:
+            "Monthly quota reached. Please upgrade your plan for more events",
+        })
+      }
 
       const eventCategory = await db.eventCategory.create({
         data: {
@@ -217,30 +240,32 @@ export const categoryRouter = router({
           },
         }),
 
-        db.event.findMany({
-          where: {
-            EventCategory: { name, userId: ctx.user.id },
-            createdAt: { gte: startDate },
-          },
-          select : {
-            fields : true
-          },
-          distinct : ["fields"]
-        }).then((events)=>{
+        db.event
+          .findMany({
+            where: {
+              EventCategory: { name, userId: ctx.user.id },
+              createdAt: { gte: startDate },
+            },
+            select: {
+              fields: true,
+            },
+            distinct: ["fields"],
+          })
+          .then((events) => {
             const fieldNames = new Set<string>()
-            events.forEach((event)=>{
-                Object.keys(event.fields as object).forEach((fieldName)=>{
-                    fieldNames.add(fieldName)
-                })
+            events.forEach((event) => {
+              Object.keys(event.fields as object).forEach((fieldName) => {
+                fieldNames.add(fieldName)
+              })
             })
             return fieldNames.size
-        })
+          }),
       ])
 
       return c.superjson({
         events,
         eventsCount,
-        uniqueFieldCount
+        uniqueFieldCount,
       })
     }),
 })

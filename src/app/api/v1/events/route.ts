@@ -55,9 +55,9 @@ export const POST = async (req: NextRequest) => {
     }
 
     // ACTUAL LOGIC
-    const currentData = new Date()
-    const currentMonth = currentData.getMonth() + 1
-    const currentYear = currentData.getFullYear()
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth() + 1
+    const currentYear = currentDate.getFullYear()
 
     const quota = await db.quota.findUnique({
       where: {
