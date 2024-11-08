@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Providers } from "@/components/providers"
+import { Toaster } from "@/components/ui/sonner"
 import { EB_Garamond } from "next/font/google"
 import { cn } from "@/utils"
 
@@ -31,6 +32,7 @@ export default function RootLayout({
           <main className="relative flex-1 flex flex-col">
             <Providers>{children}</Providers>
           </main>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

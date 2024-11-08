@@ -12,6 +12,7 @@ import { cn } from "@/utils"
 import { Button } from "./ui/button"
 import { client } from "@/lib/client"
 import { CATEGORY_NAME_VALIDATOR } from "@/lib/validators/category-validator"
+import { toast } from "sonner"
 
 const EVENT_CATEGORY_VALIDATOR = z.object({
   name: CATEGORY_NAME_VALIDATOR,
@@ -68,7 +69,12 @@ export const CreateEventCategoryModal = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-event-categories"] })
       setIsOpen(false)
+      toast.success(`Category Successfully Created!`)
     },
+    onError:(_)=>{
+      setIsOpen(false)
+      toast.error("Quota Full")
+    }
   })
 
   const {

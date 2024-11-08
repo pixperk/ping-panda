@@ -10,6 +10,7 @@ import { ArrowRight, BarChart2, Clock, Database, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { FC, useState } from "react"
 import { DashboardEmptyState } from "./dashboard-empty-state"
+import { toast } from "sonner"
 
 interface DashboardPageContentProps {}
 
@@ -33,6 +34,7 @@ const DashboardPageContent: FC<DashboardPageContentProps> = ({}) => {
     onSuccess : () => {
       queryClient.invalidateQueries({queryKey : ["user-event-categories"]})
       setDeletingCategory(null)
+      toast.success("Deleted Successfully")
     }
   })
 

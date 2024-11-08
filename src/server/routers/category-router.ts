@@ -87,7 +87,7 @@ export const categoryRouter = router({
       return c.json({ success: true })
     }),
 
-  createEventCategory: privateProcedure
+    createEventCategory: privateProcedure
     .input(
       z.object({
         name: CATEGORY_NAME_VALIDATOR,
@@ -99,33 +99,28 @@ export const categoryRouter = router({
       })
     )
     .mutation(async ({ c, ctx, input }) => {
-      const { user } = ctx
-      const { color, name, emoji } = input
-
-      const currentDate = new Date()
-      const currentMonth = currentDate.getMonth() + 1
-      const currentYear = currentDate.getFullYear()
-
-      const quota = await db.quota.findUnique({
+      const { user } = ctx;
+      const { color, name, emoji } = input;
+  
+      
+      const userEventCategoryCount = await db.eventCategory.count({
         where: {
           userId: user.id,
-          month: currentMonth,
-          year: currentYear,
         },
-      })
-
+      });
+  
       const quotaLimit =
         user.plan === "FREE"
           ? FREE_QUOTA.maxEventCategories
-          : PRO_QUOTA.maxEventCategories
-
-      if (quota && quota.count >= quotaLimit) {
-        throw new HTTPException(429, {
+          : PRO_QUOTA.maxEventCategories;
+  
+      if (userEventCategoryCount >= quotaLimit) {
+        throw new HTTPException(402, {
           message:
             "Monthly quota reached. Please upgrade your plan for more events",
-        })
+        });
       }
-
+  
       const eventCategory = await db.eventCategory.create({
         data: {
           name: name.toLowerCase(),
@@ -133,11 +128,11 @@ export const categoryRouter = router({
           emoji,
           userId: user.id,
         },
-      })
-
-      return c.json({ eventCategory })
+      });
+  
+      return c.json({ eventCategory });
     }),
-
+  
   insertQuickstartCategories: privateProcedure.mutation(async ({ ctx, c }) => {
     const categories = await db.eventCategory.createMany({
       data: [
