@@ -152,16 +152,40 @@ export const POST = async (req: NextRequest) => {
         data: { deliveryStatus: "DELIVERED" },
       })
 
-      await db.quota.upsert({
-        where: { userId: user.id, month: currentMonth, year: currentYear },
-        update: { count: { increment: 1 } },
-        create: {
-          userId: user.id,
+      const currentQuota = await db.quota.findUnique({
+        where: { 
+          userId_month_year: { 
+            userId: user.id,
+            month: currentMonth,
+            year: currentYear
+          }
+        }
+      })
+
+      if (currentQuota){
+        await db.quota.update({
+          where: { 
+            userId_month_year: { 
+              userId: user.id,
+              month: currentMonth,
+              year: currentYear
+            }
+          },
+          data : {
+            count: { increment: 1 }
+          }
+        })
+      }else{ await db.quota.update({
+        where : {
+          userId : user.id
+        },
+        data  :{
           month: currentMonth,
           year: currentYear,
           count: 1,
-        },
-      })
+          }
+      })}
+
     } catch (err) {
       await db.event.update({
         where: { id: event.id },
@@ -172,7 +196,7 @@ export const POST = async (req: NextRequest) => {
 
       return NextResponse.json(
         {
-          message: "Error processing event",
+          message: (err as Error).message,
           eventId: event.id,
         },
         { status: 500 }

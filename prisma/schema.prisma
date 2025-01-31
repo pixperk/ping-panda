@@ -9,6 +9,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") 
 }
 
 enum Plan {
@@ -89,4 +90,6 @@ model Quota {
   count Int @default(0)
 
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, month, year])
 }
